@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🩷 sealed with love</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg1:#ffeef5; --bg2:#fde4e2; --accent:#ff7f9c; --card:#fffaf9; --text:#3b2f2f;
+  }
+
+  html,body{
+    height:100%;
+    margin:0;
+    padding:0;
+    font-family: "Roboto Mono", monospace;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .card{
+    width: min(90vw, 420px);
+    max-height: 86vh;
+    background: var(--card);
+    border-radius:16px;
+    box-shadow: 0 12px 30px rgba(50,30,30,0.12);
+    padding:18px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    border: 1px solid rgba(255,127,156,0.18);
+  }
+
+  .top{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  h1{
+    font-size:1.05rem;
+    margin:0;
+    color:var(--text)
+  }
+
+  .hint{
+    font-size:0.86rem;
+    color:rgba(59,47,47,0.7)
+  }
+
+  input{
+    padding:10px 12px;
+    border-radius:10px;
+    border:2px solid rgba(255,127,156,0.28);
+    outline:none;
+    font-size:0.95rem;
+    width:100%;
+  }
+
+  button{
+    background:var(--accent);
+    color:white;
+    border:none;
+    padding:8px 12px;
+    border-radius:10px;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
+  #message{
+    font-size:0.9rem;
+    color:rgba(59,47,47,0.85)
+  }
+
+  #letterBox{
+    border-radius:10px;
+    padding:12px;
+    border:1px dashed rgba(120,90,90,0.06);
+    overflow:auto;
+    flex:1;
+    min-height:160px;
+    white-space:pre-wrap;
+    color:var(--text);
+    font-size:1rem;
+    display:none;
+  }
+
+  #letterInner{
+    line-height:1.6;
+  }
+
+  .success {color: #5a8b6f}
+  .error {color: #a7475a}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <div class="top">
+    <div>
+      <h1>🩷 sealed with love</h1>
+      <div class="hint">who wrote this little love note for you?</div>
+    </div>
+    <div class="hint" id="ms">music: off</div>
+  </div>
+
+  <div style="display:flex; gap:8px;">
+    <input id="password" placeholder="type your answer here…" />
+    <button id="submitBtn">open</button>
+  </div>
+
+  <div id="message"></div>
+
+  <div id="letterBox">
+    <div id="letterInner"></div>
+  </div>
+</div>
+
+<audio id="bgMusic" loop>
+  <source src="photograph.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+(function(){
+
+  const acceptedAnswers = new Set(["tata"]);
+
+  const letterContent =
+`to the sweetest soul i know,
+
+i kept wondering how to begin this letter, no words ever seem beautiful enough when they are meant for you. but if there's one thing i know for sure, it's this, i'm so, so, sooooo grateful you were born.
+
+out of everyone in this huge world, somehow i was given the chance to know you, to love you, and to witness the kind of person you are, aes. and that is something i will always be grateful for 🤍
+
+sometimes i just sit and think about how lucky i am that you exist, that i get to love someone with such a kind heart, such a sincere soul, and such a beautiful way of loving, and that thought alone makes my heart feel so full.
+
+lately, i've watched you pour so much of yourself into the life you're building, i see how hard you work, carrying so much without complaining much, and i just need you to know that i see all of it. i see how hard you're trying to build things for yourself, for your future, and even for us, just need you to know that none of it goes unnoticed. and there is something so beautiful about the way you keep trying, the way you keep giving your all, the way you carry so much with so much heart. every single bit of it makes me admire you even more.. sometimes i wish you could see yourself the way i see you, hihihi.
+
+thank you for being here ya baby, thank you for working so hard, for being someone worth admiring, for letting me love someone as wonderful as you, for being the sweetest part of so many of my days, for loving me the way you do, for all the effort, love, and care that you give, thank you for being you, i hope every dream you're chasing finds its way to you.
+
+so before this letter gets even longer, i just wanna say…
+words may fail me sometimes, but please know that loving you has been one of the sweetest parts in my life.
+
+happy birthday, my love, my pumpkin, my precious boy, my little peace of happiness, please keep being the beautiful soul that you are yaa! <3
+
+yours, always,
+tata🤍`;
+
+  const pw = document.getElementById('password');
+  const submitBtn = document.getElementById('submitBtn');
+  const msg = document.getElementById('message');
+  const letterBox = document.getElementById('letterBox');
+  const letterInner = document.getElementById('letterInner');
+  const bgMusic = document.getElementById('bgMusic');
+  const ms = document.getElementById('ms');
+
+  let unlocked = false;
+
+  function norm(s){
+    return (s || '').toLowerCase().trim();
+  }
+
+  function flash(text, type){
+    msg.textContent = text;
+    msg.className = type || "";
+    setTimeout(()=>{
+      if(!unlocked) msg.textContent = "";
+    }, 2500);
+  }
+
+  pw.addEventListener('keydown', e=>{
+    if(e.key === 'Enter'){
+      submitBtn.click();
+    }
+  });
+
+  submitBtn.addEventListener('click', ()=>{
+    if(unlocked) return;
+
+    const value = norm(pw.value);
+
+    if(!value){
+      flash("type something first", "error");
+      return;
+    }
+
+    if(acceptedAnswers.has(value)){
+      unlocked = true;
+      flash("opening your letter...", "success");
+      pw.disabled = true;
+      submitBtn.disabled = true;
+      openLetter();
+    } else {
+      flash("wrong answer :(", "error");
+    }
+  });
+
+  function openLetter(){
+    letterBox.style.display = "block";
+    letterInner.innerHTML = "";
+
+    playMusic();
+    typeWriter(letterContent, letterInner, 35);
+
+    setTimeout(()=> letterBox.scrollTop = letterBox.scrollHeight, 300);
+  }
+
+  function typeWriter(text, element, speed){
+    let i = 0;
+
+    function typing(){
+      if(i < text.length){
+        const char = text.charAt(i);
+
+        if(char === "\n"){
+          element.innerHTML += "<br>";
+        } else {
+          element.innerHTML += char;
+        }
+
+        i++;
+        element.scrollTop = element.scrollHeight;
+        setTimeout(typing, speed);
+      }
+    }
+
+    typing();
+  }
+
+  function playMusic(){
+    bgMusic.volume = 0;
+    bgMusic.play().then(()=>{
+      ms.textContent = "music: on";
+      fadeIn(bgMusic, 0.3, 1200);
+    }).catch(()=>{
+      ms.textContent = "music: off";
+    });
+  }
+
+  function fadeIn(audio, target, duration){
+    const step = target / (duration / 50);
+
+    const interval = setInterval(()=>{
+      if(audio.volume < target){
+        audio.volume += step;
+      } else {
+        audio.volume = target;
+        clearInterval(interval);
+      }
+    }, 50);
+  }
+
+})();
+</script>
+
+</body>
+</html>
